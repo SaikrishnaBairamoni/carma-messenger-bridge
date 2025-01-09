@@ -7,7 +7,6 @@ on:
       - "release/*"
   pull_request:
     types: [opened, synchronize, reopened]
-
 jobs:
   determine_docker_org_and_tag:
     runs-on: ubuntu-latest
@@ -17,13 +16,13 @@ jobs:
     steps:
       - id: docker-org-and-tag
         uses: usdot-fhwa-stol/actions/docker-org-and-tag@main
-
   build:
     needs: determine_docker_org_and_tag
     defaults:
       run:
         shell: bash
         working-directory: "/opt/carma/"
+    # Specify the runner environment
     runs-on: ubuntu-latest
     container:
       image: ${{ needs.determine_docker_org_and_tag.outputs.docker_organization }}/carma-base:develop
@@ -32,17 +31,14 @@ jobs:
         ROS_2_ENV: "/opt/ros/foxy/setup.bash"
         TERM: xterm
       options: "--user root"
-
     steps:
     - name: Checkout ${{ github.event.repository.name }}
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: src/${{ github.event.repository.name }}
-
     - name: Move source code
       run: mv $GITHUB_WORKSPACE/src /opt/carma/
-
     - name: Determine base branch
       id: determine-base-branch
       run: |
@@ -51,13 +47,11 @@ jobs:
         else
           echo git_branch="$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
         fi
-
     - name: Checkout dependencies
       run: |
         source "$INIT_ENV"
         source "$ROS_2_ENV"
         ./src/${{ github.event.repository.name }}/docker/checkout.bash -r /opt/carma/ -b ${{ steps.determine-base-branch.outputs.git_branch }}
-
     - name: Build Dependencies
       run: |
         source "$INIT_ENV"
